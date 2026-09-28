@@ -146,6 +146,35 @@ def decode_redir_links(html: str) -> str:
     return re.sub(r'href="https://2023\.redircdn\.com/\?([^"]+)"', repl, html)
 
 
+def embed_23img(html: str) -> str:
+    """23img 的 viewer 页链接改直链并内嵌显示。
+
+    <a href="https://23img.com/l/?i=/i/2026/09/28/ftrvkm.jpg">...</a>
+      -> <a href="https://23img.com/i/2026/09/28/ftrvkm.jpg"><img ...></a>
+    直链已验证返回 image/jpeg。
+    """
+    def repl(m):
+        direct = "https://23img.com" + m.group(1)
+        return (f'<a target="_blank" href="{direct}">'
+                f'<img src="{direct}" referrerpolicy="no-referrer" '
+                f'style="max-width:100%;height:auto;"></a>')
+    return re.sub(r'<a[^>]*href="https://23img\.com/l/\?i=([^"]+)"[^>]*>.*?</a>',
+                  repl, html, flags=re.S)
+
+
+def fix_lazy_imgs(html: str) -> str:
+    """懒加载图片还原：<img iyl-data=... ess-data='直链' ...> -> 正常 <img src='直链'>。
+
+    草榴帖子页的图片是懒加载占位（src 为广告检测图或缺失），真实地址在 ess-data 里。
+    """
+    def repl(m):
+        url = m.group(1)
+        return (f'<img src="{url}" referrerpolicy="no-referrer" '
+                f'style="max-width:100%;height:auto;" loading="lazy">')
+    return re.sub(r"""<img\b[^>]*?\bess-data\s*=\s*['"]([^'"]+)['"][^>]*>""",
+                  repl, html)
+
+
 def extract_first_post(page_html: str) -> str:
     ex = FirstPostExtractor()
     ex.feed(page_html)
@@ -158,6 +187,10 @@ def extract_first_post(page_html: str) -> str:
     html = re.sub(r'(src|href)="//', r'\1="https://', html)
     # 跳转链接还原为直链
     html = decode_redir_links(html)
+    # 23img viewer 页改直链并内嵌显示
+    html = embed_23img(html)
+    # 懒加载图片占位还原为真实图片
+    html = fix_lazy_imgs(html)
     # 去掉点赞按钮等 UI 残留
     html = re.sub(r'<div[^>]*class="t_like"[^>]*>.*?</div>', "", html, flags=re.S)
     return html.strip()

@@ -1,9 +1,11 @@
 name: 更新 RSS
 
 on:
-  schedule:
-    - cron: "*/30 * * * *"   # 每 30 分钟跑一次
   workflow_dispatch:          # 允许手动点一下立即跑
+
+# 注：原 schedule 定时触发（每 30 分钟）已移除。
+# 原因：GitHub 网页编辑器会在 cron 行自动插入 "→ Runs every 30 minutes" 文本，
+# 导致 YAML 语法错误使 workflow 无法解析。如需恢复定时，请在本地用 git 修改后推送。
 
 permissions:
   contents: write

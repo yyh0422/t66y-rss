@@ -132,6 +132,20 @@ class FirstPostExtractor(HTMLParser):
         return "".join(self.parts)
 
 
+def decode_redir_links(html: str) -> str:
+    """把草榴的跳转链接 https://2023.redircdn.com/?<真实地址>&z 还原为直链。
+
+    真实地址里 '.' 被混淆成 '______'（与跳转页自身的 var url 一致）。
+    还原后点链接直达图片/视频，不用再过 JS 倒计时中转页。
+    """
+    def repl(m):
+        inner = m.group(1)
+        if inner.endswith("&z"):
+            inner = inner[:-2]
+        return 'href="' + inner.replace("______", ".") + '"'
+    return re.sub(r'href="https://2023\.redircdn\.com/\?([^"]+)"', repl, html)
+
+
 def extract_first_post(page_html: str) -> str:
     ex = FirstPostExtractor()
     ex.feed(page_html)
@@ -140,6 +154,10 @@ def extract_first_post(page_html: str) -> str:
         return ""
     # 相对路径转绝对
     html = re.sub(r'(src|href)="/(?!/)', rf'\1="{BASE}/', html)
+    # 协议相对地址补 https
+    html = re.sub(r'(src|href)="//', r'\1="https://', html)
+    # 跳转链接还原为直链
+    html = decode_redir_links(html)
     # 去掉点赞按钮等 UI 残留
     html = re.sub(r'<div[^>]*class="t_like"[^>]*>.*?</div>', "", html, flags=re.S)
     return html.strip()

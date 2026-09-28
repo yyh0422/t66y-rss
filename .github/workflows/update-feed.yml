@@ -1,12 +1,15 @@
 name: 更新 RSS
 
+
 on:
   schedule:
-    - cron: "*/30 * * * *"   # 每 30 分钟跑一次
+    - cron: "*/30 * * * *"→ Runs every 30 minutes   # 每 30 分钟跑一次
   workflow_dispatch:          # 允许手动点一下立即跑
+
 
 permissions:
   contents: write
+
 
 jobs:
   update-feed:
@@ -14,12 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+
       - name: 抓取技术讨论区并生成 RSS
-        run: python3 fetch.py feed.xml
+        run: python3 fetch.py .
+
 
       - name: 有变化就提交
         run: |

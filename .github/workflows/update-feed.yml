@@ -25,6 +25,6 @@ jobs:
         run: |
           git config user.name "rss-bot"
           git config user.email "rss-bot@users.noreply.github.com"
-          git add feed.xml
+          git add feed.xml content_cache.json
           git diff --cached --quiet || git commit -m "更新 feed $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
